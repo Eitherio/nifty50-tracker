@@ -389,7 +389,15 @@ useEffect(() => {
   .map((stock, index) => (
 
               <tr key={index}>
-                <td style={cellStyle}>{stock.name || stock.symbol}</td>
+                <td style={cellStyle}>
+  <a
+    href={`/company/${stock.symbol}`}
+    style={{ color: '#0070f3', textDecoration: 'underline', cursor: 'pointer' }}
+  >
+    {stock.name || stock.symbol}
+  </a>
+</td>
+
                 <td style={{ ...cellStyle, position: 'relative', verticalAlign: 'top' }}>
   <div>₹{stock.price}</div>
 

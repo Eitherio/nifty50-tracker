@@ -1,7 +1,6 @@
 // 📁 src/pages/api/live.js
 import axios from 'axios';
 
-
 export default async function handler(req, res) {
   try {
     const response = await axios.get('https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEI', {
