@@ -186,38 +186,19 @@ useEffect(() => {
     <main style={{ padding: "2rem", fontFamily: "sans-serif" }}>
       
       {/* Header */}
-      <div style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: "2rem",
-        position: "relative"
-      }}>
-        <h1 style={{
-          fontSize: "2rem",
-          fontWeight: "bold",
-          margin: 0
-        }}>
-          Stock Market Tracker
-        </h1>
+      <header className="flex flex-col sm:flex-row sm:justify-between items-center mb-8 gap-4 px-4">
+  <h1 className="text-4xl font-bold text-center sm:text-left">
+    Stock Market Tracker
+  </h1>
 
-        <div style={{ width: "250px" }} />
+  <input
+    type="text"
+    placeholder="Search companies"
+    className="w-full sm:w-[700px] px-4 py-2 text-base border-2 border-gray-300 rounded-full"
+  />
+</header>
 
-        <input
-          type="text"
-          placeholder="Search companies"
-          style={{
-            padding: "0.6rem",
-            fontSize: "1rem",
-            borderRadius: "50px",
-            border: "2px solid #ccc",
-            width: "500px",
-            position: "absolute",
-            left: "55%",
-            transform: "translateX(-50%)",
-          }}
-        />
-      </div>
+        
       
 
       {/* Nifty Index */}
@@ -282,9 +263,12 @@ useEffect(() => {
     position: 'relative',
   }}
 >
-
-  <h2>📊 Nifty 50 Chart</h2>
-
+   <div style={{ margin: '0px 0px 2rem 0px', fontWeight: '550', textalign: 'center', }} >
+      
+  <h2> NIFTY-50 CHART</h2>
+  
+   </div>
+   
   {/* Filter Buttons */}
   <div style={{ marginBottom: '1rem' }}>
     {['1m', '7d', '1mo', '6mo'].map((type) => (
@@ -293,10 +277,10 @@ useEffect(() => {
         onClick={() => setSelectedFilter(type)}
         style={{
           margin: '0 10px',
-          padding: '0.5rem 1rem',
+          padding: '0.4rem 0.5rem',
           backgroundColor: selectedFilter === type ? '#4caf50' : '#eee',
           border: '1px solid #ccc',
-          borderRadius: '4px',
+          borderRadius: '10px',
           cursor: 'pointer',
         }}
       >
@@ -392,7 +376,7 @@ useEffect(() => {
                 <td style={cellStyle}>
   <a
     href={`/company/${stock.symbol}`}
-    style={{ color: '#0070f3', textDecoration: 'underline', cursor: 'pointer' }}
+    style={{ color: 'black', cursor: 'pointer', }}
   >
     {stock.name || stock.symbol}
   </a>
