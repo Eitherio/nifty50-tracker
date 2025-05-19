@@ -70,9 +70,9 @@ const fetchHistoricalData = async () => {
     switch (selectedFilter) {
       case '1m': range = '1d'; interval = '1m'; break;
       case '5d': range = '5d'; interval = '5m'; break;
-      case '1mo': range = '1mo'; interval = '15m'; break;
+      case '1mo': range = '1mo'; interval = '5m'; break;
       case '6mo': range = '6mo'; interval = '1h'; break;
-      case '1y': range = '1y'; interval = '1d'; break;
+      case '1y': range = '1y'; interval = '1h'; break;
       default: range = '1d'; interval = '1m';
     }
 
@@ -123,7 +123,7 @@ setChartData({
       borderWidth: 1.5,
       fill: 'origin',
       tension: 0.3,
-      pointRadius: 0.2,
+      pointRadius: 0.3,
     },
   ],
 });
