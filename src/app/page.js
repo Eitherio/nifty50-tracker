@@ -289,7 +289,7 @@ const NiftyChart = ({ chartData }) => {
 
    {/* Live Chart */}
   <section className="border border-gray-300 rounded-md p-4 mb-16 px-0 py-6 w-full ">
-  <h2 className="text-xl font-semibold text-center mb-4">NIFTY-50 CHART</h2>
+  <h2 className="text-xl font- text-center mb-4">NIFTY-50 CHART</h2>
   <div className="w-full h-[300px] sm:h-[300px] md:h-[350px]">
   <Line
   data={chartData}
