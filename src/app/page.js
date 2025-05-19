@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react';
 import { Line } from 'react-chartjs-2';
 import axios from 'axios';
 
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip } from 'chart.js';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip);
 
 const niftyCompanies = [
   "Adani Enterprises.NS", "Adani Ports.NS", "Apollo Hospitals.NS", "Asian Paints.NS", 
@@ -30,10 +30,37 @@ const cellStyle = {
 export default function Home() {
   const [stockData, setStockData] = useState([]);
   const [chartData, setChartData] = useState({ labels: [], datasets: [] });
-  const [sortColumn, setSortColumn] = useState(null);  // 'price' or 'change'
-  const [sortDirection, setSortDirection] = useState('asc'); // 'asc' or 'desc'
-  const [niftyChangeValue, setNiftyChangeValue] = useState(null); // ₹ change value
+  const [niftyChange, setNiftyChange] = useState(null);             // ✅ Define first
+  const [niftyChangeValue, setNiftyChangeValue] = useState(null);
+  const [liveData, setLiveData] = useState(null);
+  const [selectedFilter, setSelectedFilter] = useState('1m');
+  const [chartColor, setChartColor] = useState('rgba(75,192,192,1)'); // ✅ Also early
+  const [sortColumn, setSortColumn] = useState(null);
+  const [sortDirection, setSortDirection] = useState('asc');
 
+
+useEffect(() => {
+  fetchLiveData(); // Fetch live data first
+}, []);
+
+useEffect(() => {
+  if (niftyChange !== null) {
+    fetchHistoricalData(); // Fetch chart after live data is available
+  }
+}, [niftyChange, selectedFilter]);
+
+useEffect(() => {
+  const fetchStockData = async () => {
+    const res = await fetch("/api/stocks");
+    const json = await res.json();
+    setStockData(json);
+  };
+
+  fetchStockData();
+  const interval = setInterval(fetchStockData, 60000);
+  return () => clearInterval(interval);
+}, []);
+ // ← rerun if filter changes
 
 
 const fetchHistoricalData = async () => {
@@ -41,54 +68,75 @@ const fetchHistoricalData = async () => {
     let range, interval;
 
     switch (selectedFilter) {
-      case '1m': range = '1d'; interval = '5m'; break;
-      case '7d': range = '7d'; interval = '1h'; break;
-      case '1mo': range = '1mo'; interval = '1d'; break;
-      case '6mo': range = '6mo'; interval = '1d'; break;
+      case '1m': range = '1d'; interval = '1m'; break;
+      case '5d': range = '5d'; interval = '5m'; break;
+      case '1mo': range = '1mo'; interval = '15m'; break;
+      case '6mo': range = '6mo'; interval = '1h'; break;
+      case '1y': range = '1y'; interval = '1d'; break;
       default: range = '1d'; interval = '1m';
     }
 
     const response = await axios.get(`/api/historical?range=${range}&interval=${interval}`);
     const { timestamp, indicators } = response.data;
 
-    let dates;
+    const prices = indicators.quote[0].close;
+    const rawDates = timestamp.map(ts => new Date(ts * 1000));
+
+    const dates = rawDates.map(date => {
+      if (selectedFilter === '1m') {
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      } else if (selectedFilter === '5d') {
+        return date.toLocaleDateString();
+      } else if (selectedFilter === '1mo') {
+        return `${date.getDate()}/${date.getMonth() + 1}`;
+      } else if (selectedFilter === '6mo' || selectedFilter === '1y') {
+        return date.toLocaleDateString('default', { month: 'short' });
+      } else {
+        return date.toLocaleString();
+      }
+    });
+
+    // ✅ Determine color locally
+let lineColor;
+let fillColor;
 
 if (selectedFilter === '1m') {
-  dates = timestamp.map(ts => new Date(ts * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-} else if (selectedFilter === '7d') {
-  dates = timestamp.map(ts => new Date(ts * 1000).toLocaleDateString());
-} else if (selectedFilter === '1mo') {
-  dates = timestamp.map(ts => {
-    const d = new Date(ts * 1000);
-    return d.getDate() % 5 === 0 ? d.toLocaleDateString() : '';
-  });
-} else if (selectedFilter === '6mo') {
-  dates = timestamp.map(ts => {
-    const d = new Date(ts * 1000);
-    return d.getDate() === 1 ? d.toLocaleDateString('default', { month: 'short' }) : '';
-  });
+  lineColor = niftyChange >= 0 ? 'green' : 'red';
+  fillColor = niftyChange >= 0 ? 'rgba(0,255,0,0.2)' : 'rgba(255,0,0,0.2)';
 } else {
-  dates = timestamp.map(ts => new Date(ts * 1000).toLocaleString());
+  const first = prices[0];
+  const last = prices[prices.length - 1];
+  const isPositive = last >= first;
+  lineColor = isPositive ? 'green' : 'red';
+  fillColor = isPositive ? 'rgba(0,255,0,0.2)' : 'rgba(255,0,0,0.2)';
 }
 
-    const prices = indicators.quote[0].close;
+// ✅ Use those directly
+setChartData({
+  labels: dates,
+  datasets: [
+    {
+      label: 'Nifty 50',
+      data: prices,
+      borderColor: lineColor,
+      backgroundColor: fillColor,
+      borderWidth: 1.5,
+      fill: 'origin',
+      tension: 0.3,
+      pointRadius: 0.2,
+    },
+  ],
+});
 
-    setChartData({
-      labels: dates,
-      datasets: [
-        {
-          label: 'Nifty 50',
-          data: prices,
-          borderColor: 'rgba(75,192,192,1)',
-          borderWidth: 1,
-          fill: false,
-        },
-      ],
-    });
+
   } catch (error) {
     console.error('Error fetching historical data:', error.message);
   }
 };
+
+
+
+
 
 const handleSort = (column) => {
   if (sortColumn === column) {
@@ -121,11 +169,11 @@ const prepareChartData = (historicalData) => {
 
 
 const NiftyChart = ({ chartData }) => {
-  return <Line data={chartData} />;
+  return <Line data={chartData} options={options} />;
+
+  
 };
 
-
-const [niftyChange, setNiftyChange] = useState(null);
 
   const fetchLiveData = async () => {
   try {
@@ -147,38 +195,6 @@ const [niftyChange, setNiftyChange] = useState(null);
     console.error('Error fetching live data:', error.message);
   }
 };
-
-
-
-
-
-const [liveData, setLiveData] = useState(null);
-const [selectedFilter, setSelectedFilter] = useState('1m'); // default: 1-minute (today)
-
-useEffect(() => {
-  const fetchAll = async () => {
-    await fetchLiveData();
-    await fetchHistoricalData(); // gets data for current filter
-    const res = await fetch("/api/stocks");
-    const json = await res.json();
-    setStockData(json);
-  };
-  const handleSort = (column) => {
-  if (sortColumn === column) {
-    // Toggle direction
-    setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-  } else {
-    setSortColumn(column);
-    setSortDirection('asc');
-  }
-};
-
-
-  fetchAll();
-  const interval = setInterval(fetchAll, 60000); // update every 60 seconds
-  return () => clearInterval(interval);
-}, [selectedFilter]); // ← rerun if filter changes
-
 
 
 
@@ -246,32 +262,10 @@ useEffect(() => {
   </div>
 </div>
 
-
-
-      {/* Live Chart */}
-<section
-  style={{
-    border: '2px solid gray',
-    padding: '2rem',
-    marginBottom: '6rem',
-    textAlign: 'center',
-    height: '450px',       // ⬇️ Reduced from 400 to 320
-    width: '92%',          // ⬆️ Slightly wider than before
-    marginLeft: 'auto',
-    marginRight: 'auto',
-    overflow: 'hidden',
-    position: 'relative',
-  }}
->
-   <div style={{ margin: '0px 0px 2rem 0px', fontWeight: '550', textalign: 'center', }} >
-      
-  <h2> NIFTY-50 CHART</h2>
-  
-   </div>
    
   {/* Filter Buttons */}
   <div style={{ marginBottom: '1rem' }}>
-    {['1m', '7d', '1mo', '6mo'].map((type) => (
+    {['1m', '5d', '1mo', '6mo', '1y'].map((type) => (
       <button
         key={type}
         onClick={() => setSelectedFilter(type)}
@@ -284,47 +278,74 @@ useEffect(() => {
           cursor: 'pointer',
         }}
       >
-        {type === '1m' ? '1 day' : type === '7d' ? '7 Days' : type === '1mo' ? '1 Month' : '6 Months'}
+        {type === '1m' ? '1 day' : type === '5d' ? '5 Days' : type === '1mo' ? '1 Month' : type === '6mo' ? '6 Months' : '1 year'}
       </button>
     ))}
   </div>
 
   {chartData.labels.length > 0 ? (
-   <div style={{ height: '300px', paddingBottom: '10px' }}>
+   <div className="h-[400px] sm:h-[500px]" >
 
 
+   {/* Live Chart */}
+  <section className="border border-gray-300 rounded-md p-4 mb-16 px-0 py-6 w-full ">
+  <h2 className="text-xl font-semibold text-center mb-4">NIFTY-50 CHART</h2>
+  <div className="w-full h-[300px] sm:h-[300px] md:h-[350px]">
   <Line
-    data={chartData}
-    options={{
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        x: {
-  title: {
-    display: true,
-    text: selectedFilter === '1m' ? 'Time (HH:MM:SS)' : 'Date',
-    color: '#666',
-    font: {
-      size: 12,
-      weight: 'bold',
+  data={chartData}
+  options={{
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: {
+        ticks: {
+          callback: function (value, index, ticks) {
+  const label = this.getLabelForValue(value);
+
+  if (selectedFilter === '1m') {
+    return label.slice(0, 5); // "HH:MM"
+  }
+
+  if (selectedFilter === '5d' || selectedFilter === '1mo') {
+    const date = new Date(label);
+    if (!isNaN(date)) {
+      return `${date.getDate()}/${date.getMonth() + 1}`; // e.g. 12/5
     }
-  },
-          grid: {
-            display: true,
-            color: '#eee'
-          }
+  }
+
+  if (selectedFilter === '6mo' || selectedFilter === '1y') {
+    const date = new Date(label);
+    if (!isNaN(date)) {
+      return date.toLocaleDateString('default', { month: 'short' }); // "Jan", "Feb"
+    }
+  }
+
+  return label;
+},
+
+
+          maxRotation: 0,
+          autoSkip: true,
+          maxTicksLimit: 12,
+          color: '#000'
         },
-        y: {
-          ticks: {
-            color: '#000',
-          },
-          grid: {
-            color: '#ddd',
-          }
+        grid: {
+          color: '#eee'
+        }
+      },
+      y: {
+        ticks: {
+          color: '#000'
+        },
+        grid: {
+          color: '#ddd'
         }
       }
-    }}
-  />
+    }
+  }}
+/>
+</div>
+</section>
 </div>
 
 
@@ -332,86 +353,75 @@ useEffect(() => {
   ) : (
     <p style={{ color: 'gray' }}>Loading chart data...</p>
   )}
-</section>
 
 
 
 
 
-      {/* Table */}
-      <section>
-        <h2 style={{ fontSize: "1.4rem", fontWeight: "600" }}>Nifty 50 Companies</h2>
-        <table style={{
-          width: "85%",
-          borderCollapse: "collapse",
-          marginTop: "1rem",
-          border: "5px solid #ccc"
-        }}>
-          <thead>
-            <tr>
-              <th style={cellStyle}>Company</th>
-              <th style={{ ...cellStyle, cursor: 'pointer' }} onClick={() => handleSort('price')}>
-              Price {sortColumn === 'price' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
-            </th>
-            <th style={{ ...cellStyle, cursor: 'pointer' }} onClick={() => handleSort('change')}>
-              % Change {sortColumn === 'change' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
-            </th>
+ <section className="mt-8">
+  <h2 className="text-xl font-semibold mt-0 mb-4">Nifty 50 Companies</h2>
 
-            </tr>
-          </thead>
-          <tbody>
-{[...stockData]
-  .sort((a, b) => {
-    if (!sortColumn) return 0;
-    const aVal = sortColumn === 'price' ? a.price : a.change;
-    const bVal = sortColumn === 'price' ? b.price : b.change;
+  <div className="overflow-x-auto w-full">
+    <table className="min-w-full border-[2px] border-black border-collapse rounded-md text-sm sm:text-base table-auto">
+      <thead className="bg-gray-100">
+        <tr>
+          <th className="px-4 py-2 border-[2px] border-black p-3">Company</th>
+          <th className="px-4 py-2 cursor-pointer border-[2px] border-black p-3" onClick={() => handleSort('price')}>
+            Price {sortColumn === 'price' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
+          </th>
+          <th className="px-4 py-2 cursor-pointer border-[2px] border-black p-3" onClick={() => handleSort('change')}>
+            % Change {sortColumn === 'change' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
+          </th>
+        </tr>
+      </thead>
 
-    return sortDirection === 'asc'
-      ? aVal - bVal
-      : bVal - aVal;
-  })
-  .map((stock, index) => (
+      <tbody>
+        {[...stockData]
+          .sort((a, b) => {
+            if (!sortColumn) return 0;
+            const aVal = sortColumn === 'price' ? a.price : a.change;
+            const bVal = sortColumn === 'price' ? b.price : b.change;
+            return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+          })
+          .map((stock, index) => (
+            <tr key={index} className="hover:bg-gray-50">
+              <td className="px-4 py-2 border whitespace-nowrap">
+                <a
+                  href={`/company/${stock.symbol}`}
+                  className="text-grey hover:underline"
+                >
+                  {stock.name || stock.symbol}
+                </a>
+              </td>
+              <td className="relative text-center px-4 py-3 border align-middle">
+  {/* Price centered */}
+  <span className="text-base font-medium block">₹{stock.price}</span>
 
-              <tr key={index}>
-                <td style={cellStyle}>
-  <a
-    href={`/company/${stock.symbol}`}
-    style={{ color: 'black', cursor: 'pointer', }}
-  >
-    {stock.name || stock.symbol}
-  </a>
-</td>
-
-                <td style={{ ...cellStyle, position: 'relative', verticalAlign: 'top' }}>
-  <div>₹{stock.price}</div>
-
-  {/* Real-time calculated absolute change */}
-  {stock.change && !isNaN(stock.change) && stock.price ? (
-    <div style={{
-      position: 'absolute',
-      bottom: '4px',
-      right: '6px',
-      fontSize: '0.75rem',
-      fontWeight: 'bold',
-      color: stock.change >= 0 ? 'green' : 'red'
-    }}>
+  {/* Small change bottom-right */}
+  {stock.change && !isNaN(stock.change) && stock.price && (
+    <span
+      className={`absolute bottom-0.5 right-1 text-xs font-semibold ${
+        stock.change >= 0 ? 'text-green-600' : 'text-red-600'
+      }`}
+    >
       {stock.change >= 0 ? '+' : '-'}
       {Math.abs((stock.price * stock.change / 100).toFixed(2))}
-    </div>
-  ) : null}
+    </span>
+  )}
 </td>
 
-                <td style={{
-                  ...cellStyle,
-                  color: stock.change >= 0 ? "green" : "red"
-                }}>
-                  {stock.change}%
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
-    </main>
+
+              <td
+                className={`px-4 py-2 border relative text-center align-middle ${stock.change >= 0 ? 'text-green-600' : 'text-red-500'}`}
+              >
+                {stock.change}%
+              </td>
+            </tr>
+          ))}
+      </tbody>
+    </table>
+  </div>
+</section>
+</main>
   );
 }
