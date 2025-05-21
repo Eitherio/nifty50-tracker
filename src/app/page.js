@@ -202,20 +202,12 @@ const NiftyChart = ({ chartData }) => {
     <main style={{ padding: "2rem", fontFamily: "sans-serif" }}>
       
       {/* Header */}
-      <header className="flex flex-col sm:flex-row sm:justify-between items-center mb-8 gap-4 px-4">
-  <h1 className="text-4xl font-bold text-center sm:text-left">
+      <header className="mb-8 px-4 text-center">
+  <h1 className="text-4xl font-bold">
     Stock Market Tracker
   </h1>
-
-  <input
-    type="text"
-    placeholder="Search companies"
-    className="w-full sm:w-[700px] px-4 py-2 text-base border-2 border-gray-300 rounded-full"
-  />
 </header>
 
-        
-      
 
       {/* Nifty Index */}
 <div style={{ marginBottom: '1.5rem' }}>
@@ -264,7 +256,7 @@ const NiftyChart = ({ chartData }) => {
 
    
   {/* Filter Buttons */}
-  <div style={{ marginBottom: '1rem' }}>
+  <div style={{ marginBottom: '3rem' }}>
     {['1m', '5d', '1mo', '6mo', '1y'].map((type) => (
       <button
         key={type}
@@ -288,9 +280,9 @@ const NiftyChart = ({ chartData }) => {
 
 
    {/* Live Chart */}
-  <section className="border border-gray-300 rounded-md p-4 mb-16 px-0 py-6 w-full ">
+  <section className="border-2 border-gray-300 rounded-md p-4 mb-24 text-center mx-auto relative overflow-hidden w-full ">
   <h2 className="text-xl font- text-center mb-4">NIFTY-50 CHART</h2>
-  <div className="w-full h-[300px] sm:h-[300px] md:h-[350px]">
+  <div className="w-full h-[300px] sm:h-[450px] md:h-[350px]">
   <Line
   data={chartData}
   options={{
