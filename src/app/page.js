@@ -199,14 +199,15 @@ const NiftyChart = ({ chartData }) => {
 
 
   return (
-    <main style={{ padding: "2rem", fontFamily: "sans-serif" }}>
+    <main className="bg-slate-900 text-slate-100 min-h-screen p-8">
       
       {/* Header */}
-      <header className="mb-8 px-4 text-center">
-  <h1 className="text-4xl font-bold">
+      <header className="flex flex-col sm:flex-row sm:justify-between items-center mb-8 gap-4 px-4 bg-slate-800 p-4 rounded-lg">
+  <h1 className="text-3xl font-bold text-white text-center sm:text-left">
     Stock Market Tracker
   </h1>
 </header>
+
 
 
       {/* Nifty Index */}
@@ -256,20 +257,17 @@ const NiftyChart = ({ chartData }) => {
 
    
   {/* Filter Buttons */}
-  <div style={{ marginBottom: '3rem' }}>
+  <div className="flex flex-wrap gap-4 mb-4">
     {['1m', '5d', '1mo', '6mo', '1y'].map((type) => (
       <button
         key={type}
         onClick={() => setSelectedFilter(type)}
-        style={{
-          margin: '0 10px',
-          padding: '0.4rem 0.5rem',
-          backgroundColor: selectedFilter === type ? '#4caf50' : '#eee',
-          border: '1px solid #ccc',
-          borderRadius: '10px',
-          cursor: 'pointer',
-        }}
-      >
+        className={`px-3 py-1 rounded-md border ${
+    selectedFilter === type
+      ? 'bg-blue-500 text-white'
+      : 'bg-slate-700 text-slate-200 hover:bg-slate-600'
+  }`}
+>
         {type === '1m' ? '1 day' : type === '5d' ? '5 Days' : type === '1mo' ? '1 Month' : type === '6mo' ? '6 Months' : '1 year'}
       </button>
     ))}
@@ -280,7 +278,7 @@ const NiftyChart = ({ chartData }) => {
 
 
    {/* Live Chart */}
-  <section className="border-2 border-gray-300 rounded-md p-4 mb-24 text-center mx-auto relative overflow-hidden w-full ">
+  <section className="border-2 p-4 mb-24 text-center mx-auto relative overflow-hidden w-full bg-slate-800 border-slate-700 rounded-lg ">
   <h2 className="text-xl font- text-center mb-4">NIFTY-50 CHART</h2>
   <div className="w-full h-[300px] sm:h-[450px] md:h-[350px]">
   <Line
@@ -319,18 +317,18 @@ const NiftyChart = ({ chartData }) => {
           maxRotation: 0,
           autoSkip: true,
           maxTicksLimit: 12,
-          color: '#000'
+          color: '#ffffff'
         },
         grid: {
-          color: '#eee'
+          color: 'rgba(100, 116, 139, 0.2)'
         }
       },
       y: {
         ticks: {
-          color: '#000'
+          color: '#ffffff'
         },
         grid: {
-          color: '#ddd'
+          color: 'rgba(100, 116, 139, 0.2)'
         }
       }
     }
@@ -350,18 +348,18 @@ const NiftyChart = ({ chartData }) => {
 
 
 
- <section className="mt-8">
+ <section className="mt-10">
   <h2 className="text-xl font-semibold mt-0 mb-4">Nifty 50 Companies</h2>
 
-  <div className="overflow-x-auto w-full">
-    <table className="min-w-full border-[2px] border-black border-collapse rounded-md text-sm sm:text-base table-auto">
-      <thead className="bg-gray-100">
+  <div className="overflow-x-auto w-full mt-10">
+    <table className="min-w-full border-[2px] border-slate-700 bg-slate-800 text-white rounded-md text-sm sm:text-base table-auto">
+      <thead className="bg-slate-700">
         <tr>
-          <th className="px-4 py-2 border-[2px] border-black p-3">Company</th>
-          <th className="px-4 py-2 cursor-pointer border-[2px] border-black p-3" onClick={() => handleSort('price')}>
+          <th className="px-4 py-2 border-[2px] border-slate-600 p-3">Company</th>
+          <th className="px-4 py-2 cursor-pointer border-[2px] border-slate-600 p-3" onClick={() => handleSort('price')}>
             Price {sortColumn === 'price' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
           </th>
-          <th className="px-4 py-2 cursor-pointer border-[2px] border-black p-3" onClick={() => handleSort('change')}>
+          <th className="px-4 py-2 cursor-pointer border-[2px] border-slate-600 p-3" onClick={() => handleSort('change')}>
             % Change {sortColumn === 'change' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
           </th>
         </tr>
@@ -376,7 +374,7 @@ const NiftyChart = ({ chartData }) => {
             return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
           })
           .map((stock, index) => (
-            <tr key={index} className="hover:bg-gray-50">
+            <tr key={index} className="hover:bg-gray-900">
               <td className="px-4 py-2 border whitespace-nowrap">
                 <a
                   href={`/company/${stock.symbol}`}
