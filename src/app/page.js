@@ -349,7 +349,7 @@ const NiftyChart = ({ chartData }) => {
 
 
  <section className="mt-10">
-  <h2 className="text-xl font-semibold mt-0 mb-4">Nifty 50 Companies</h2>
+  <h2 className="text-xl font-semibold mt-0 mb-4">🔹Nifty 50 Companies</h2>
 
   <div className="overflow-x-auto w-full mt-10">
     <table className="min-w-full border-[2px] border-slate-700 bg-slate-800 text-white rounded-md text-sm sm:text-base table-auto">
